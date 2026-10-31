@@ -5,3 +5,7 @@
 
 # Python virtual environments
 **/.venv/
+venv/
+apache-maven-3.8.8/
+apache-maven-3.8.8-bin.tar.gz
+*.log
