@@ -6,7 +6,7 @@ El sistema Rentar es una plataforma distribuida armada para el alquiler de vehí
 - **Microservicios Backend**: Escritos en Java 17 con Spring Boot. Incluyen vehicle-service, customer-service y rental-service.
 - **Comunicación Sincrónica**: Funciona a través de gRPC, lo que permite que los servicios charlen de forma rápida y eficiente.
 - **Comunicación Asincrónica**: Usa RabbitMQ (`rentar.events`) para eventos pesados, como mandar a verificar los vehículos.
-- **Persistencia**: MySQL con bases de datos divididas para cada servicio.
+- **Persistencia**: MySQL con bases de datos divididas lógicamente para cada microservicio, asegurando la autonomía de los datos tal cual dictan los patrones de arquitectura de microservicios. (Con esto nos referimos a que cada microservicio maneja su propio esquema de base de datos o si se levanta monolítico todo en una).
 
 ## 2. Cambios y Mejoras en la rama dev
 1. **Autenticación del Administrador**: Resulta que la contraseña de admin en la base de datos estaba vacía. Le generamos el hash válido de BCrypt y lo mandamos directo al script SQL.
@@ -14,7 +14,7 @@ El sistema Rentar es una plataforma distribuida armada para el alquiler de vehí
 3. **Registro de Vehículos Externos**: Para que los clientes puedan registrar sus vehículos, agregamos el estado `PENDIENTE` al ENUM de la tabla `vehiculo` en MySQL.
 
 ## 3. Guía de Instalación y Ejecución
-**Requisitos**: Java 17, Maven, Python 3.12, MySQL, RabbitMQ.
+**Requisitos**: Java 17, Maven, Python 3.12, Docker, MySQL, RabbitMQ.
 
 **Variables de Entorno**:
 ```env
@@ -28,12 +28,11 @@ RABBITMQ_USERNAME=rentar
 RABBITMQ_PASSWORD=rentar
 ```
 
-**Comandos**:
+**Ejecución con Docker Compose (Recomendado)**:
+Hemos armado el `docker-compose.yml` para levantar toda la infraestructura:
 ```bash
-mvn spring-boot:run -f customer-service/pom.xml
-mvn spring-boot:run -f vehicle-service/pom.xml
-mvn spring-boot:run -f rental-service/pom.xml -Dspring-boot.run.main-class=ar.unla.rentar.rental.RentalServiceApplication
-cd api-gateway && uvicorn app.main:app --reload
+docker compose build
+docker compose up -d
 ```
 
 ## 4. Catálogo de Endpoints REST

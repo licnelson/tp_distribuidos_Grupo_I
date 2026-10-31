@@ -22,6 +22,8 @@
 CREATE DATABASE IF NOT EXISTS `rentar`;
 USE `rentar`;
 CREATE DATABASE IF NOT EXISTS `rentar_vehiculos`;
+CREATE DATABASE IF NOT EXISTS `rentar_clientes`;
+CREATE DATABASE IF NOT EXISTS `rentar_reservas`;
 
 --
 -- Table structure for table `reserva`
@@ -169,4 +171,4 @@ DEALLOCATE PREPARE set_auto_increment;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2026-09-11 23:55:18
-ALTER TABLE `rentar_vehiculos`.`vehiculo` MODIFY COLUMN `estado` enum('DISPONIBLE','EN_ALQUILER','RESERVADO','VEHICLE_STATUS_UNSPECIFIED','PENDIENTE');
+ALTER TABLE `rentar`.`vehiculo` MODIFY COLUMN `estado` enum('DISPONIBLE','EN_ALQUILER','RESERVADO','VEHICLE_STATUS_UNSPECIFIED','PENDIENTE');
