@@ -12,7 +12,7 @@ from app.security.dependencies import get_current_user, require_admin
 from app.security.jwt import AuthenticatedUser
 
 
-router = APIRouter(prefix="/vehiculos", tags=["Vehículos"])
+router = APIRouter(prefix="/api/vehiculos", tags=["Vehículos"])
 
 
 def _vehicle_client(request: Request) -> VehicleGrpcClient:

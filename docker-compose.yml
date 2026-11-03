@@ -1,4 +1,27 @@
+networks:
+  rentar-network:
+    name: rentar-network
+    driver: bridge
+
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: rentar-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./script_rentar_V2.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - rentar-network
+
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: rentar-rabbitmq
@@ -16,6 +39,106 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - rentar-network
+
+  customer-service:
+    image: licnelson/rentar-customer-service:latest
+    build:
+      context: ./customer-service
+    container_name: rentar-customer-service
+    environment:
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=rentar
+      - RABBITMQ_PASSWORD=rentar
+      - JWT_SECRET=RentarClaveSecreta2026ParaJWT123456789
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/rentar?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    ports:
+      - "8083:8083"
+      - "50052:50052"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - rentar-network
+
+  vehicle-service:
+    image: licnelson/rentar-vehicle-service:latest
+    build:
+      context: ./vehicle-service
+    container_name: rentar-vehicle-service
+    environment:
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=rentar
+      - RABBITMQ_PASSWORD=rentar
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/rentar?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    ports:
+      - "8082:8082"
+      - "50051:50051"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - rentar-network
+
+  rental-service:
+    image: licnelson/rentar-rental-service:latest
+    build:
+      context: ./rental-service
+    container_name: rentar-rental-service
+    environment:
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=rentar
+      - RABBITMQ_PASSWORD=rentar
+      - CUSTOMER_SERVICE_GRPC_TARGET=customer-service:50052
+      - VEHICLE_SERVICE_GRPC_TARGET=vehicle-service:50051
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/rentar?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    ports:
+      - "8084:8084"
+      - "50053:50053"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - rentar-network
+
+  api-gateway:
+    image: licnelson/rentar-api-gateway:latest
+    build:
+      context: ./api-gateway
+    container_name: rentar-api-gateway
+    environment:
+      - VEHICLE_GRPC_TARGET=vehicle-service:50051
+      - CUSTOMER_GRPC_TARGET=customer-service:50052
+      - RENTAL_GRPC_TARGET=rental-service:50053
+      - JWT_SECRET=RentarClaveSecreta2026ParaJWT123456789
+    ports:
+      - "8000:8000"
+    depends_on:
+      - customer-service
+      - vehicle-service
+      - rental-service
+    networks:
+      - rentar-network
 
 volumes:
+  mysql-data:
   rabbitmq-data:
